@@ -4,6 +4,7 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PseudoColumnUsage;
 import java.time.LocalDate;
+import java.util.List;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -15,31 +16,22 @@ public class JdbcApplication {
 
 	public static void main(String[] args) {
 		SpringApplication.run(JdbcApplication.class, args);
-		
-		 EmployeePayrollService dbService = new EmployeePayrollService();
-	        EmployeePayroll terisa = new EmployeePayroll(2, "Sai", 250000.00, LocalDate.of(2020, 1, 10));
+		EmployeePayrollService dbService = new EmployeePayrollService();
 
-	        try {
-	            int result = dbService.updateEmployeeSalaryUsingPreparedStatement("Sai", 300000.00);
-	            if (result > 0) {
-	                System.out.println("Salary updated successfully in database using PreparedStatement.");
-	            }
+        LocalDate startDate = LocalDate.of(2022, 12, 31);
+        LocalDate endDate = LocalDate.of(2024, 8, 13);
 
-	            
-	            double updatedSalary = dbService.getSalary("Sai");
+        try {
+            List<EmployeePayroll> employees = dbService.getEmployeesInDateRange(startDate, endDate);
 
-	            terisa.setSalary(updatedSalary);
+            System.out.println("Employees who joined between " + startDate + " and " + endDate + ":");
+            for (EmployeePayroll emp : employees) {
+                System.out.println(emp);
+            }
 
-	            if (terisa.getSalary() == updatedSalary) {
-	                System.out.println(" EmployeePayroll object is in sync with database.");
-	            } else {
-	                System.out.println("Mismatch between object and database salary.");
-	            }
-
-	        } catch (CustomDatabaseException e) {
-	            e.printStackTrace();
-	        }
-	    
+        } catch (CustomDatabaseException e) {
+            e.printStackTrace();
+        }
 	}
 
 }
