@@ -7,27 +7,21 @@ import java.sql.PseudoColumnUsage;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
+import com.app.JDBC.exception.CustomDatabaseException;
+
 @SpringBootApplication
 public class JdbcApplication {
 
 	public static void main(String[] args) {
 		SpringApplication.run(JdbcApplication.class, args);
 		
-		String jdbcUrl = "jdbc:mysql://localhost:3306/payroll_service";
-		String username = "root";
-		String password = "V@an123&";
-		
-		try {
-			Class.forName("com.mysql.cj.jdbc.Driver");
-			System.out.println("Driver Loaded successfully");
-			
-			Connection con = DriverManager.getConnection(jdbcUrl, username, password);
-			System.out.println("Connected to database successfully");
-			
-			con.close();
-		}catch(Exception e) {
-			e.printStackTrace();
-		}
+		 EmployeePayrollService service = new EmployeePayrollService();
+	        try {
+	            System.out.println("Fetching employee payroll data...");
+	            service.getEmployeePayrollData().forEach(System.out::println);
+	        } catch (CustomDatabaseException e) {
+	            e.printStackTrace();
+	        }
 	}
 
 }
