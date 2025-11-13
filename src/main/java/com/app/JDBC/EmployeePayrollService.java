@@ -20,9 +20,11 @@ public class EmployeePayrollService {
         String insertEmployee = "INSERT INTO employee_payroll (name, salary, start_date, gender, department) VALUES (?, ?, ?, ?, ?)";
         String insertPayroll = "INSERT INTO payroll_details (employee_id, basic_pay, deductions, taxable_pay, tax, net_pay) VALUES (?, ?, ?, ?, ?, ?)";
 
-        try (Connection connection = DriverManager.getConnection(JDBC_URL, USERNAME, PASSWORD)) {
-            connection.setAutoCommit(false);
-
+        Connection connection = null;
+        try {
+            connection = DriverManager.getConnection(JDBC_URL, USERNAME, PASSWORD);
+            connection.setAutoCommit(false); 
+            
             int generatedId = 0;
             try (PreparedStatement empStmt = connection.prepareStatement(insertEmployee, Statement.RETURN_GENERATED_KEYS)) {
                 empStmt.setString(1, name);
@@ -32,10 +34,13 @@ public class EmployeePayrollService {
                 empStmt.setString(5, department);
 
                 int empRows = empStmt.executeUpdate();
-                if (empRows == 0) throw new SQLException("Employee insert failed");
+                if (empRows == 0)
+                    throw new SQLException("Employee insert failed.");
 
                 try (ResultSet rs = empStmt.getGeneratedKeys()) {
-                    if (rs.next()) generatedId = rs.getInt(1);
+                    if (rs.next()) {
+                        generatedId = rs.getInt(1);
+                    }
                 }
             }
 
@@ -43,6 +48,7 @@ public class EmployeePayrollService {
             double taxablePay = salary - deductions;
             double tax = taxablePay * 0.1;
             double netPay = salary - tax;
+
             try (PreparedStatement payStmt = connection.prepareStatement(insertPayroll)) {
                 payStmt.setInt(1, generatedId);
                 payStmt.setDouble(2, salary);
@@ -52,7 +58,8 @@ public class EmployeePayrollService {
                 payStmt.setDouble(6, netPay);
 
                 int payRows = payStmt.executeUpdate();
-                if (payRows == 0) throw new SQLException("Payroll insert failed");
+                if (payRows == 0)
+                    throw new SQLException("Payroll insert failed.");
             }
 
             connection.commit();
@@ -64,12 +71,23 @@ public class EmployeePayrollService {
             return newEmployee;
 
         } catch (SQLException e) {
-            try (Connection connection = DriverManager.getConnection(JDBC_URL, USERNAME, PASSWORD)) {
-                connection.rollback();
-            } catch (SQLException ex) {
-                ex.printStackTrace();
+            if (connection != null) {
+                try {
+                    connection.rollback();
+                } catch (SQLException rollbackEx) {
+                    rollbackEx.printStackTrace();
+                }
             }
-            throw new CustomDatabaseException("Error adding new employee and payroll details", e);
+            throw new CustomDatabaseException("Error adding employee and payroll details", e);
+        } finally {
+            if (connection != null) {
+                try {
+                    connection.setAutoCommit(true);
+                    connection.close();
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
+            }
         }
     }
 
