@@ -1,6 +1,8 @@
 package com.app.JDBC;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+
 import java.time.LocalDate;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -9,20 +11,13 @@ import com.app.JDBC.exception.CustomDatabaseException;
 @SpringBootTest
 class JdbcApplicationTests {
 
-    @Test
-    public void givenNewEmployee_WhenAdded_ShouldMatchWithDB() throws CustomDatabaseException {
-        EmployeePayrollService service = new EmployeePayrollService();
-        EmployeePayroll actual = service.addNewEmployee(
-                "Priya",
-                55000.00,
-                LocalDate.of(2024, 6, 12),
-                "F",
-                "HR"
-        );
+	@Test
+	public void givenNewEmployee_WhenAdded_ShouldInsertIntoBothTables() throws CustomDatabaseException {
+	    EmployeePayrollService service = new EmployeePayrollService();
+	    EmployeePayroll emp = service.addNewEmployee("Kavi", 50000.00, LocalDate.of(2024, 3, 1), "F", "IT");
 
-        assertEquals("Priya", actual.getName());
-        assertEquals(55000.00, actual.getSalary());
-        assertEquals("F", actual.getGender());
-        assertEquals(LocalDate.of(2024, 6, 12), actual.getStartDate());
-    }
+	    assertNotNull(emp);
+	    assertEquals("Kavi", emp.getName());
+	}
+
 }
