@@ -5,6 +5,7 @@ import java.time.LocalDate;
 public class EmployeePayroll {
     private int id;
     private String name;
+    private char gender;
     private double salary;
     private LocalDate startDate;
 
@@ -28,9 +29,11 @@ public class EmployeePayroll {
     public String getName() { return name; }
     public double getSalary() { return salary; }
     public LocalDate getStartDate() { return startDate; }
+    public char getGender() {return gender;}
+    
     @Override
     public String toString() {
-        return "EmployeePayroll [id=" + id + ", name=" + name + ", salary=" + salary + ", startDate=" + startDate + "]";
+        return "EmployeePayroll [id=" + id + ", name=" + name + ", gender" + gender + ", salary=" + salary + ", startDate=" + startDate + "]";
     }
 
 }

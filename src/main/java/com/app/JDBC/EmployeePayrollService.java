@@ -1,45 +1,52 @@
 package com.app.JDBC;
 import java.sql.*;
+import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
+
+import com.app.JDBC.exception.CustomDatabaseException;
+
+import java.sql.*;
+import java.util.*;
 
 import com.app.JDBC.exception.CustomDatabaseException;
 
 public class EmployeePayrollService {
+
     private static final String JDBC_URL = "jdbc:mysql://localhost:3306/payroll_service";
     private static final String USERNAME = "root";
     private static final String PASSWORD = "V@an123&";
 
-    // Update salary using PreparedStatement
-    public int updateEmployeeSalaryUsingPreparedStatement(String name, double newSalary) throws CustomDatabaseException {
-        String updateQuery = "UPDATE employee_payroll SET salary = ? WHERE name = ?";
+    public void getSalaryStatisticsByGender() throws CustomDatabaseException {
+        String query = "SELECT gender, SUM(salary) AS total_salary, " +
+                       "AVG(salary) AS average_salary, MIN(salary) AS min_salary, " +
+                       "MAX(salary) AS max_salary, COUNT(*) AS count_employees " +
+                       "FROM employee_payroll " +
+                       "GROUP BY gender";
+
         try (Connection connection = DriverManager.getConnection(JDBC_URL, USERNAME, PASSWORD);
-             PreparedStatement preparedStatement = connection.prepareStatement(updateQuery)) {
+             PreparedStatement ps = connection.prepareStatement(query);
+             ResultSet rs = ps.executeQuery()) {
 
-            preparedStatement.setDouble(1, newSalary);
-            preparedStatement.setString(2, name);
+            while (rs.next()) {
+                String gender = rs.getString("gender");
+                double sum = rs.getDouble("total_salary");
+                double avg = rs.getDouble("average_salary");
+                double min = rs.getDouble("min_salary");
+                double max = rs.getDouble("max_salary");
+                int count = rs.getInt("count_employees");
 
-            return preparedStatement.executeUpdate();
-
-        } catch (SQLException e) {
-            throw new CustomDatabaseException("Error updating salary using PreparedStatement", e);
-        }
-    }
-
-    // Fetch salary to verify sync
-    public double getSalary(String name) throws CustomDatabaseException {
-        String query = "SELECT salary FROM employee_payroll WHERE name = ?";
-        try (Connection connection = DriverManager.getConnection(JDBC_URL, USERNAME, PASSWORD);
-             PreparedStatement preparedStatement = connection.prepareStatement(query)) {
-
-            preparedStatement.setString(1, name);
-            ResultSet resultSet = preparedStatement.executeQuery();
-            if (resultSet.next()) {
-                return resultSet.getDouble("salary");
-            } else {
-                throw new CustomDatabaseException("Employee not found: " + name, null);
+                System.out.println("Gender: " + gender);
+                System.out.println("Total Salary: " + sum);
+                System.out.println("Average Salary: " + avg);
+                System.out.println("Minimum Salary: " + min);
+                System.out.println("Maximum Salary: " + max);
+                System.out.println("Number of Employees: " + count);
+                System.out.println("----------------------------");
             }
 
         } catch (SQLException e) {
-            throw new CustomDatabaseException("Error reading salary from DB", e);
+            throw new CustomDatabaseException("Error retrieving salary statistics by gender", e);
         }
     }
 }
