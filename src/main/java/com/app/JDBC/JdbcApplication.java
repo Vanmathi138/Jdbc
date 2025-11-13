@@ -16,28 +16,30 @@ public class JdbcApplication {
 	public static void main(String[] args) {
 		SpringApplication.run(JdbcApplication.class, args);
 		
-		EmployeePayrollService dbService = new EmployeePayrollService();
-        EmployeePayroll emp = new EmployeePayroll("Sai", 0);
+		 EmployeePayrollService dbService = new EmployeePayrollService();
+	        EmployeePayroll terisa = new EmployeePayroll(2, "Sai", 250000.00, LocalDate.of(2020, 1, 10));
 
-		 try {
-	          
-	            int result = dbService.updateEmployeeSalary("Sai", 3000000.00);
+	        try {
+	            int result = dbService.updateEmployeeSalaryUsingPreparedStatement("Sai", 300000.00);
 	            if (result > 0) {
-	                System.out.println("Salary updated successfully in DB!");
+	                System.out.println("Salary updated successfully in database using PreparedStatement.");
 	            }
 
-	          
+	            
 	            double updatedSalary = dbService.getSalary("Sai");
-	            emp.setSalary(updatedSalary);
 
-	            if (emp.getSalary() == updatedSalary) {
-	                System.out.println("EmployeePayroll object synced with DB successfully!");
+	            terisa.setSalary(updatedSalary);
+
+	            if (terisa.getSalary() == updatedSalary) {
+	                System.out.println(" EmployeePayroll object is in sync with database.");
+	            } else {
+	                System.out.println("Mismatch between object and database salary.");
 	            }
 
 	        } catch (CustomDatabaseException e) {
 	            e.printStackTrace();
 	        }
-
+	    
 	}
 
 }

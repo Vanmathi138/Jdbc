@@ -24,8 +24,10 @@ public class EmployeePayroll {
     public void setSalary(double salary) {
         this.salary = salary;
     }
+    public int getId() { return id; }
+    public String getName() { return name; }
     public double getSalary() { return salary; }
-
+    public LocalDate getStartDate() { return startDate; }
     @Override
     public String toString() {
         return "EmployeePayroll [id=" + id + ", name=" + name + ", salary=" + salary + ", startDate=" + startDate + "]";
