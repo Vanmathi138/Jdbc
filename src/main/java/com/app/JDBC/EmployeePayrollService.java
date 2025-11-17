@@ -14,33 +14,34 @@ public class EmployeePayrollService {
 
     private List<EmployeePayroll> employeeList = new ArrayList<>();
 
-    public EmployeePayroll addNewEmployee(String name, double salary, LocalDate startDate, String gender, String department)
+    public EmployeePayroll addNewEmployee(String name, double salary, LocalDate startDate, String gender, List<String> departments)
             throws CustomDatabaseException {
 
-        String insertEmployee = "INSERT INTO employee_payroll (name, salary, start_date, gender, department) VALUES (?, ?, ?, ?, ?)";
-        String insertPayroll = "INSERT INTO payroll_details (employee_id, basic_pay, deductions, taxable_pay, tax, net_pay) VALUES (?, ?, ?, ?, ?, ?)";
+    	String insertEmployee = "INSERT INTO employee_payroll (name, salary, start_date, gender) VALUES (?, ?, ?, ?)";
+    	String insertPayroll = "INSERT INTO payroll_details (employee_id, basic_pay, deductions, taxable_pay, tax, net_pay) VALUES (?, ?, ?, ?, ?, ?)";
+
+    	// IMPORTANT FIXES
+    	String insertDepartment = "INSERT INTO department (department_name) VALUES (?)";
+    	String findDepartment = "SELECT department_id FROM department WHERE department_name = ?";
+    	String insertEmpDept = "INSERT INTO employee_department (employee_id, department_id) VALUES (?, ?)";
 
         Connection connection = null;
+
         try {
             connection = DriverManager.getConnection(JDBC_URL, USERNAME, PASSWORD);
             connection.setAutoCommit(false); 
-            
-            int generatedId = 0;
+
+            int empId = 0;
             try (PreparedStatement empStmt = connection.prepareStatement(insertEmployee, Statement.RETURN_GENERATED_KEYS)) {
                 empStmt.setString(1, name);
                 empStmt.setDouble(2, salary);
                 empStmt.setDate(3, java.sql.Date.valueOf(startDate));
                 empStmt.setString(4, gender);
-                empStmt.setString(5, department);
 
-                int empRows = empStmt.executeUpdate();
-                if (empRows == 0)
-                    throw new SQLException("Employee insert failed.");
+                empStmt.executeUpdate();
 
                 try (ResultSet rs = empStmt.getGeneratedKeys()) {
-                    if (rs.next()) {
-                        generatedId = rs.getInt(1);
-                    }
+                    if (rs.next()) empId = rs.getInt(1);
                 }
             }
 
@@ -50,35 +51,58 @@ public class EmployeePayrollService {
             double netPay = salary - tax;
 
             try (PreparedStatement payStmt = connection.prepareStatement(insertPayroll)) {
-                payStmt.setInt(1, generatedId);
+                payStmt.setInt(1, empId);
                 payStmt.setDouble(2, salary);
                 payStmt.setDouble(3, deductions);
                 payStmt.setDouble(4, taxablePay);
                 payStmt.setDouble(5, tax);
                 payStmt.setDouble(6, netPay);
-
-                int payRows = payStmt.executeUpdate();
-                if (payRows == 0)
-                    throw new SQLException("Payroll insert failed.");
+                payStmt.executeUpdate();
             }
 
+            for (String deptName : departments) {
+                int deptId = 0;
+
+                try (PreparedStatement findStmt = connection.prepareStatement(findDepartment)) {
+                    findStmt.setString(1, deptName);
+                    try (ResultSet rs = findStmt.executeQuery()) {
+                        if (rs.next()) {
+                            deptId = rs.getInt("dept_id");
+                        }
+                    }
+                }
+
+                if (deptId == 0) {
+                	try (PreparedStatement findStmt = connection.prepareStatement(findDepartment)) {
+                	    findStmt.setString(1, deptName);
+                	    try (ResultSet rs = findStmt.executeQuery()) {
+                	        if (rs.next()) {
+                	            deptId = rs.getInt("department_id");
+                	        }
+                	    }
+                	}
+
+                }
+
+                try (PreparedStatement linkStmt = connection.prepareStatement(insertEmpDept)) {
+                    linkStmt.setInt(1, empId);
+                    linkStmt.setInt(2, deptId);
+                    linkStmt.executeUpdate();
+                }
+            }
             connection.commit();
 
-            EmployeePayroll newEmployee = new EmployeePayroll(generatedId, name, salary, startDate, gender, department);
-            employeeList.add(newEmployee);
+            EmployeePayroll newEmp = new EmployeePayroll(empId, name, salary, startDate, gender, departments);
+            employeeList.add(newEmp);
 
-            System.out.println("Employee & Payroll added successfully: " + newEmployee);
-            return newEmployee;
+            System.out.println(" Employee with departments added successfully: " + newEmp);
+            return newEmp;
 
         } catch (SQLException e) {
             if (connection != null) {
-                try {
-                    connection.rollback();
-                } catch (SQLException rollbackEx) {
-                    rollbackEx.printStackTrace();
-                }
+                try { connection.rollback(); } catch (SQLException ex) { ex.printStackTrace(); }
             }
-            throw new CustomDatabaseException("Error adding employee and payroll details", e);
+            throw new CustomDatabaseException("Error adding new employee with payroll & department details", e);
         } finally {
             if (connection != null) {
                 try {
