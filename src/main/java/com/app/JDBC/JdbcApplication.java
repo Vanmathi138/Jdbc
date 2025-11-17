@@ -14,13 +14,5 @@ public class JdbcApplication {
         SpringApplication.run(JdbcApplication.class, args);
 
 
-        EmployeePayrollService dbService = new EmployeePayrollService();
-
-        try {
-            dbService.addNewEmployee("Priya", 55000.00, LocalDate.of(2024, 6, 12), "F", Arrays.asList("HR", "Finance"));
-            dbService.addNewEmployee("Arun", 65000.00, LocalDate.of(2023, 4, 5), "M", Arrays.asList("IT", "Admin"));
-        } catch (CustomDatabaseException e) {
-            e.printStackTrace();
-        }
     }
 }
